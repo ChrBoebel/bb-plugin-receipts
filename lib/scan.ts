@@ -29,7 +29,7 @@ import {
   BASE_CACHE_FILE,
   RATES_CACHE_FILE,
   SCAN_CACHE_FILE,
-  usageDataPath,
+  receiptsDataPath,
 } from "./plugin-data";
 import {
   decodeBaseCache,
@@ -327,9 +327,9 @@ export class UsageScanner {
   private readChain: Promise<unknown> = Promise.resolve();
 
   constructor(private readonly deps: UsageScanDeps) {
-    this.ratesCachePath = usageDataPath(RATES_CACHE_FILE, deps.dataDir);
-    this.scanCachePath = usageDataPath(SCAN_CACHE_FILE, deps.dataDir);
-    this.baseCachePath = usageDataPath(BASE_CACHE_FILE, deps.dataDir);
+    this.ratesCachePath = receiptsDataPath(RATES_CACHE_FILE, deps.dataDir);
+    this.scanCachePath = receiptsDataPath(SCAN_CACHE_FILE, deps.dataDir);
+    this.baseCachePath = receiptsDataPath(BASE_CACHE_FILE, deps.dataDir);
   }
 
   private log(message: string): void {

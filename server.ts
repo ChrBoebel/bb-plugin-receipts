@@ -2,7 +2,7 @@ import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
 import { z } from "zod";
 
 import { isValidTimeZone, makeWindow } from "./lib/format";
-import { USAGE_DATA_DIR } from "./lib/plugin-data";
+import { RECEIPTS_DATA_DIR } from "./lib/plugin-data";
 import {
   applyEnvironmentThreads,
   applyProjectCatalog,
@@ -14,7 +14,7 @@ import { mergedUsageSchema } from "./lib/rpc-schema";
 import { UsageScanner } from "./lib/scan";
 import type { MergedUsage, ProjectTotals } from "./lib/types";
 
-const USAGE_COMMAND = "bb usage show [--days 7|30|90] [--force]";
+const RECEIPTS_COMMAND = "bb receipts show [--days 7|30|90] [--force]";
 
 const daySchema = z
   .string()
@@ -59,7 +59,7 @@ type UsageCliOptions =
 
 function parseCliOptions(argv: readonly string[]): UsageCliOptions {
   if (argv[0] !== "show") {
-    return { error: `Expected \"show\". Usage: ${USAGE_COMMAND}` };
+    return { error: `Expected \"show\". Usage: ${RECEIPTS_COMMAND}` };
   }
 
   let days: 7 | 30 | 90 = 30;
@@ -76,7 +76,7 @@ function parseCliOptions(argv: readonly string[]): UsageCliOptions {
         !["7", "30", "90"].includes(value)
       ) {
         return {
-          error: `--days must be specified once as 7, 30, or 90. Usage: ${USAGE_COMMAND}`,
+          error: `--days must be specified once as 7, 30, or 90. Usage: ${RECEIPTS_COMMAND}`,
         };
       }
       days = Number(value) as 7 | 30 | 90;
@@ -84,11 +84,11 @@ function parseCliOptions(argv: readonly string[]): UsageCliOptions {
       i += 1;
     } else if (arg === "--force") {
       if (force) {
-        return { error: `--force must not be repeated. Usage: ${USAGE_COMMAND}` };
+        return { error: `--force must not be repeated. Usage: ${RECEIPTS_COMMAND}` };
       }
       force = true;
     } else {
-      return { error: `Unknown argument: ${arg}. Usage: ${USAGE_COMMAND}` };
+      return { error: `Unknown argument: ${arg}. Usage: ${RECEIPTS_COMMAND}` };
     }
   }
 
@@ -205,7 +205,7 @@ export default async function plugin(bb: BbPluginApi) {
   });
 
   const scanner = new UsageScanner({
-    dataDir: USAGE_DATA_DIR,
+    dataDir: RECEIPTS_DATA_DIR,
     log: (message) => bb.log.info(message),
   });
 
@@ -252,13 +252,13 @@ export default async function plugin(bb: BbPluginApi) {
   bb.onDispose(() => scanner.flush());
 
   bb.cli.register({
-    name: "usage",
+    name: "receipts",
     summary: "Show Claude / Codex / Hermes / OpenCode / Pi / Cursor usage totals",
     commands: [
       {
         name: "show",
         summary: "Print usage for a window (default 30 days)",
-        usage: "bb usage show [--days 7|30|90] [--force]",
+        usage: "bb receipts show [--days 7|30|90] [--force]",
       },
     ],
     async run(argv) {
