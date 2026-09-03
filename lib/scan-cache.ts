@@ -16,14 +16,16 @@ import type {
  * v5: Codex adjacent-only signature dedupe; Claude structured dedupe keys;
  *     reject malformed Codex cache splits.
  * v6: persist workspace cwd / projectPath on each record.
+ * v7: resolve Hermes ACP and subagent working directories.
  */
-export const USAGE_SCAN_CACHE_VERSION = 6 as const;
+export const USAGE_SCAN_CACHE_VERSION = 7 as const;
 
 /**
  * v4: homogeneous pricing-source buckets; v5: include projectPath;
- * v6: Cursor; v7: Cursor auth path; v8: Hermes and OpenCode SQLite sources.
+ * v6: Cursor; v7: Cursor auth path; v8: Hermes and OpenCode SQLite sources;
+ * v9: Hermes ACP and subagent project attribution.
  */
-export const USAGE_BASE_CACHE_VERSION = 8 as const;
+export const USAGE_BASE_CACHE_VERSION = 9 as const;
 
 export interface CachedFile {
   size: number;

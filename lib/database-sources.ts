@@ -16,11 +16,17 @@ export interface UsageDatabaseResult {
   } | null;
 }
 
-interface HermesRow {
+/** Just the columns needed to resolve a session's working directory. */
+interface HermesDirectoryRow {
   id: unknown;
+  cwd: unknown;
+  model_config: unknown;
+  parent_session_id: unknown;
+}
+
+interface HermesRow extends HermesDirectoryRow {
   model: unknown;
   started_at: unknown;
-  cwd: unknown;
   input_tokens: unknown;
   output_tokens: unknown;
   cache_read_tokens: unknown;
@@ -140,6 +146,94 @@ function safeDatabaseMessage(provider: string, error: unknown): string {
   return `${provider} usage database could not be read.`;
 }
 
+/** Bounds the delegation walk and the lookup of out-of-window ancestors. */
+const HERMES_MAX_PARENT_DEPTH = 8;
+
+/** SQLite caps host parameters per statement; stay well under it. */
+const SQL_PARAMETER_CHUNK = 500;
+
+function chunked<T>(values: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    out.push(values.slice(index, index + size));
+  }
+  return out;
+}
+
+/**
+ * Hermes only fills `sessions.cwd` for CLI runs. ACP sessions — everything bb
+ * launches — leave the column null and carry the directory inside the
+ * `model_config` JSON instead. Subagents carry neither and inherit it from the
+ * session that delegated to them.
+ */
+function directoryOfSession(row: HermesDirectoryRow): string {
+  const direct = stringValue(row.cwd).trim();
+  if (direct.length > 0) return direct;
+  const config = stringValue(row.model_config);
+  if (config.length === 0) return "";
+  try {
+    const parsed = JSON.parse(config) as { cwd?: unknown };
+    return stringValue(parsed.cwd).trim();
+  } catch {
+    return "";
+  }
+}
+
+async function resolveHermesDirectories(
+  databasePath: string,
+  rows: readonly HermesRow[],
+): Promise<Map<string, string>> {
+  const known = new Map<string, HermesDirectoryRow>();
+  for (const row of rows) known.set(stringValue(row.id), row);
+
+  // A subagent's parent may have started before the requested window, so pull
+  // the ancestors that the windowed query did not return.
+  for (let depth = 0; depth < HERMES_MAX_PARENT_DEPTH; depth++) {
+    const missing = [
+      ...new Set(
+        [...known.values()]
+          .map((row) => stringValue(row.parent_session_id))
+          .filter((id) => id.length > 0 && !known.has(id)),
+      ),
+    ];
+    if (missing.length === 0) break;
+    let found = 0;
+    for (const chunk of chunked(missing, SQL_PARAMETER_CHUNK)) {
+      const parents = await queryRows<HermesDirectoryRow>(
+        databasePath,
+        `SELECT id, cwd, model_config, parent_session_id
+           FROM sessions
+          WHERE id IN (${chunk.map(() => "?").join(",")})`,
+        ...chunk,
+      );
+      for (const parent of parents) {
+        known.set(stringValue(parent.id), parent);
+        found++;
+      }
+    }
+    // Dangling parent ids would otherwise loop until the depth cap.
+    if (found === 0) break;
+  }
+
+  const resolved = new Map<string, string>();
+  for (const row of rows) {
+    const seen = new Set<string>();
+    let current: HermesDirectoryRow | undefined = row;
+    let directory = "";
+    while (current !== undefined && seen.size < HERMES_MAX_PARENT_DEPTH) {
+      const id = stringValue(current.id);
+      if (seen.has(id)) break;
+      seen.add(id);
+      directory = directoryOfSession(current);
+      if (directory.length > 0) break;
+      const parentId = stringValue(current.parent_session_id);
+      current = parentId.length > 0 ? known.get(parentId) : undefined;
+    }
+    resolved.set(stringValue(row.id), directory);
+  }
+  return resolved;
+}
+
 export async function readHermesUsage(options: {
   sinceDay: string;
   untilDay: string;
@@ -153,7 +247,7 @@ export async function readHermesUsage(options: {
   try {
     const rows = await queryRows<HermesRow>(
       databasePath,
-      `SELECT id, model, started_at, cwd,
+      `SELECT id, model, started_at, cwd, model_config, parent_session_id,
               input_tokens, output_tokens, cache_read_tokens,
               cache_write_tokens, reasoning_tokens,
               actual_cost_usd, estimated_cost_usd, cost_status,
@@ -163,6 +257,7 @@ export async function readHermesUsage(options: {
       localDayStartMs(options.sinceDay, options.timeZone) / 1_000,
       localDayEndMs(options.untilDay, options.timeZone) / 1_000,
     );
+    const directories = await resolveHermesDirectories(databasePath, rows);
     const records = rows.map((row): UsageRecord => {
       const model = stringValue(row.model) || "unknown";
       const billingProvider = stringValue(row.billing_provider);
@@ -176,7 +271,7 @@ export async function readHermesUsage(options: {
         timestampMs: finiteNonNegative(row.started_at) * 1_000,
         model: displayModel,
         sessionId: stringValue(row.id),
-        projectPath: stringValue(row.cwd),
+        projectPath: directories.get(stringValue(row.id)) ?? "",
         totals: {
           uncachedInputTokens: finiteNonNegative(row.input_tokens),
           cachedInputTokens: finiteNonNegative(row.cache_read_tokens),
