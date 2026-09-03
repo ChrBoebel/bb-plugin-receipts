@@ -28,7 +28,7 @@ function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
 
-export function UsagePage() {
+export function ReceiptsPage() {
   const rpc = useRpc<typeof rpcContract>();
   const [windowDays, setWindowDays] = useState<7 | 30 | 90>(30);
   const [metric, setMetric] = useState<UsageChartMetric>("cost");
@@ -164,7 +164,7 @@ export function UsagePage() {
       : merged.cachedInputTokens / observedInput;
 
   return (
-    <div className="usage-page h-full min-h-0 overflow-auto bg-background text-foreground">
+    <div className="receipts-page h-full min-h-0 overflow-auto bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">

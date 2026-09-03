@@ -1,5 +1,5 @@
 import { definePluginApp } from "@get-bb/plugin-sdk/app";
-import { UsagePage } from "@/components/usage/usage-page";
+import { ReceiptsPage } from "@/components/usage/receipts-page";
 import "./app.css";
 
 export default definePluginApp((app) => {
@@ -8,6 +8,6 @@ export default definePluginApp((app) => {
     title: "Usage",
     icon: "ChartColumn",
     path: "usage",
-    component: UsagePage,
+    component: ReceiptsPage,
   });
 });
