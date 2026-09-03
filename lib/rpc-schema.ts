@@ -2,7 +2,14 @@ import { z } from "zod";
 
 import type { MergedUsage } from "./types";
 
-const providerKind = z.enum(["claude", "codex", "pi", "cursor"]);
+const providerKind = z.enum([
+  "claude",
+  "codex",
+  "pi",
+  "cursor",
+  "hermes",
+  "opencode",
+]);
 
 const providerAmount = z.object({
   costUsd: z.number(),
@@ -60,6 +67,8 @@ export const mergedUsageSchema = z.object({
         codex: providerAmount,
         pi: providerAmount,
         cursor: providerAmount,
+        hermes: providerAmount,
+        opencode: providerAmount,
       }).strict(),
     }).strict(),
   ),

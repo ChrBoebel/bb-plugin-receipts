@@ -5,6 +5,7 @@ import * as NodePath from "node:path";
 import * as NodeReadline from "node:readline";
 import { readCursorAuth } from "./cursor-auth";
 import { fetchCursorUsage } from "./cursor-api";
+import { readHermesUsage, readOpenCodeUsage } from "./database-sources";
 import {
   dayInTimeZone,
   localDayEndMs,
@@ -836,10 +837,20 @@ export class UsageScanner {
     }
 
     const sinceMs = windowStartMs(cover.sinceDay);
-    const [claudeDirs, codexDirs, piDirs] = await Promise.all([
+    const [claudeDirs, codexDirs, piDirs, hermes, opencode] = await Promise.all([
       resolveClaudeDirs(),
       resolveCodexDirs(),
       resolvePiDirs(),
+      readHermesUsage({
+        sinceDay: cover.sinceDay,
+        untilDay: cover.untilDay,
+        timeZone: cover.timeZone,
+      }),
+      readOpenCodeUsage({
+        sinceDay: cover.sinceDay,
+        untilDay: cover.untilDay,
+        timeZone: cover.timeZone,
+      }),
     ]);
 
     const [claudeFiles, codexFiles, piFiles] = await Promise.all([
@@ -870,6 +881,8 @@ export class UsageScanner {
       ...claudeFiles.files,
       ...codexFiles.files,
       ...piFiles.files,
+      ...(hermes.file ? [hermes.file] : []),
+      ...(opencode.file ? [opencode.file] : []),
     ];
     const fingerprint = fingerprintFiles(allFiles);
 
@@ -950,6 +963,8 @@ export class UsageScanner {
       ...codex.records,
       ...pi.records,
       ...cursor.records,
+      ...hermes.records,
+      ...opencode.records,
     ]);
     const { buckets, sessionsByDay } = aggregateBuckets(
       allRecords,
@@ -975,7 +990,14 @@ export class UsageScanner {
       ratesKey,
       computedAtMs: Date.now(),
       buckets,
-      sources: [claude.source, codex.source, pi.source, cursor.source],
+      sources: [
+        claude.source,
+        codex.source,
+        hermes.source,
+        opencode.source,
+        pi.source,
+        cursor.source,
+      ],
       pricing,
       sessionsByDay,
       cursorEnabled: input.cursor?.enabled === true,
@@ -1204,6 +1226,8 @@ export function mergeSummary(summary: UsageSummary): MergedUsage {
         codex: emptyProvider(),
         pi: emptyProvider(),
         cursor: emptyProvider(),
+        hermes: emptyProvider(),
+        opencode: emptyProvider(),
       },
     };
     day.costUsd += bucket.costUsd;

@@ -3,6 +3,8 @@ import type { UsageProviderKind } from "../../lib/types";
 export const PROVIDER_LABEL: Record<UsageProviderKind, string> = {
   claude: "Claude Code",
   codex: "Codex",
+  hermes: "Hermes Agent",
+  opencode: "OpenCode",
   pi: "Pi",
   cursor: "Cursor",
 };
@@ -10,6 +12,10 @@ export const PROVIDER_LABEL: Record<UsageProviderKind, string> = {
 export const PROVIDER_COLOR: Record<UsageProviderKind, string> = {
   claude: "var(--usage-claude, #d97757)",
   codex: "var(--usage-codex, #e6e6e6)",
+  hermes:
+    "var(--usage-hermes, oklch(from var(--pbm-brand-acp-hermes-agent, #0000F2) var(--pbm-lightness, 0.6) min(calc(c * var(--pbm-chroma-scale, 0.85)), var(--pbm-chroma-cap, 0.125)) h))",
+  opencode:
+    "var(--usage-opencode, oklch(from var(--pbm-brand-acp-opencode, #B8C425) var(--pbm-lightness, 0.6) min(calc(c * var(--pbm-chroma-scale, 0.85)), var(--pbm-chroma-cap, 0.125)) h))",
   pi: "var(--usage-pi, #6ee7b7)",
   cursor: "var(--usage-cursor, #8b5cf6)",
 };
@@ -69,20 +75,47 @@ export function ProviderMark({
     );
   }
 
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 800 800"
-      className={className}
-      aria-hidden
-      fill="currentColor"
-      style={{ color: PROVIDER_COLOR.pi }}
-    >
-      <path
-        fillRule="evenodd"
-        d="M165.29 165.29H517.36V400H400V517.36H282.65V634.72H165.29ZM282.65 282.65V400H400V282.65Z"
+  if (provider === "hermes" || provider === "opencode") {
+    const iconName = provider === "hermes" ? "hermes-agent" : "opencode";
+    const iconUrl = `/api/v1/plugins/provider-acp/assets/icons/${iconName}.svg`;
+    return (
+      <span
+        className={`${className ?? ""} inline-block shrink-0`}
+        aria-hidden
+        style={{
+          color: PROVIDER_COLOR[provider],
+          backgroundColor: "currentColor",
+          WebkitMaskImage: `url("${iconUrl}")`,
+          maskImage: `url("${iconUrl}")`,
+          WebkitMaskPosition: "center",
+          maskPosition: "center",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
+        }}
       />
-      <path d="M517.36 400H634.72V634.72H517.36Z" />
-    </svg>
-  );
+    );
+  }
+
+  if (provider === "pi") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 800 800"
+        className={className}
+        aria-hidden
+        fill="currentColor"
+        style={{ color: PROVIDER_COLOR.pi }}
+      >
+        <path
+          fillRule="evenodd"
+          d="M165.29 165.29H517.36V400H400V517.36H282.65V634.72H165.29ZM282.65 282.65V400H400V282.65Z"
+        />
+        <path d="M517.36 400H634.72V634.72H517.36Z" />
+      </svg>
+    );
+  }
+
+  return null;
 }
