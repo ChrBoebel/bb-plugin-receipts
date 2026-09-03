@@ -14,7 +14,7 @@
   "homepage": "https://github.com/iamEvanYT/bb-usage-page#readme",
   "engines": {
     "bb": ">=0.36",
-    "bbPluginSdk": "^0.4.1"
+    "bbPluginSdk": ">=0.4.34"
   },
   "bb": {
     "name": "Usage",
@@ -53,6 +53,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@get-bb/plugin-sdk": "0.4.34",
     "@radix-ui/react-dialog": "^1.1.19",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
