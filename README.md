@@ -8,6 +8,10 @@ Requires bb `>= 0.41`. Git installs need `npm` on PATH.
 
 ## Install
 
+Find **Receipts** under **Extensions** in bb and install it from the Community marketplace.
+
+Or install from GitHub:
+
 ```bash
 bb plugin install https://github.com/ChrBoebel/bb-plugin-receipts
 ```
@@ -24,7 +28,7 @@ From a local checkout:
 bb plugin install .
 ```
 
-Open **Receipts** in the bb sidebar, or run:
+Open **Usage** in the bb sidebar, or run:
 
 ```bash
 bb receipts show [--days 7|30|90] [--force]
@@ -130,6 +134,13 @@ Provider logos are tinted from the
 [True Colors](https://github.com/ChrBoebel/bb-plugin-provider-brand-marks)
 palette when that plugin is installed, and fall back to built-in brand colours
 otherwise.
+
+## Feedback
+
+Tried this plugin? Share what worked and what got in the way using the
+[feedback form](https://github.com/ChrBoebel/bb-plugin-receipts/issues/new?template=feedback.yml).
+Include your bb version, plugin version and operating system if known.
+Feedback is voluntary and public; omit private project paths, transcripts and credentials.
 
 ## License
 

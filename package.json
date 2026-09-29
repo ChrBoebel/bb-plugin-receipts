@@ -1,6 +1,6 @@
 {
   "name": "bb-plugin-receipts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Receipts for every coding agent in bb: Claude Code, Codex, Hermes Agent, OpenCode, Pi, and Cursor token usage with estimated API cost.",
   "type": "module",
   "license": "MIT",
